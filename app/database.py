@@ -13,8 +13,16 @@ AZURE_MYSQL_PASSWORD = os.getenv("AZURE_MYSQL_PASSWORD")
 AZURE_MYSQL_DATABASE = os.getenv("AZURE_MYSQL_DATABASE")
 AZURE_MYSQL_PORT = os.getenv("AZURE_MYSQL_PORT")
 
+# デバッグ用：接続情報の出力
+print("Database Connection Info:")
+print(f"Host: {AZURE_MYSQL_HOST}")
+print(f"User: {AZURE_MYSQL_USER}")
+print(f"Database: {AZURE_MYSQL_DATABASE}")
+print(f"Port: {AZURE_MYSQL_PORT}")
+
 # SQLAlchemy接続URL
 SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{AZURE_MYSQL_USER}:{AZURE_MYSQL_PASSWORD}@{AZURE_MYSQL_HOST}:{AZURE_MYSQL_PORT}/{AZURE_MYSQL_DATABASE}"
+print(f"Connection URL: {SQLALCHEMY_DATABASE_URL}")
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
