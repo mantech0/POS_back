@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
+from urllib.parse import quote_plus
 
 load_dotenv()
 
@@ -21,7 +22,7 @@ print(f"Database: {AZURE_MYSQL_DATABASE}")
 print(f"Port: {AZURE_MYSQL_PORT}")
 
 # SQLAlchemy接続URL
-SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{AZURE_MYSQL_USER}:{AZURE_MYSQL_PASSWORD}@{AZURE_MYSQL_HOST}:{AZURE_MYSQL_PORT}/{AZURE_MYSQL_DATABASE}"
+SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{AZURE_MYSQL_USER}:{quote_plus(AZURE_MYSQL_PASSWORD)}@{AZURE_MYSQL_HOST}:{AZURE_MYSQL_PORT}/{AZURE_MYSQL_DATABASE}"
 print(f"Connection URL: {SQLALCHEMY_DATABASE_URL}")
 
 engine = create_engine(
