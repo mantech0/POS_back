@@ -1,13 +1,17 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Azure Database for MySQL接続情報
-AZURE_MYSQL_HOST = "tech0-gen-8-step4-db-3.mysql.database.azure.com"
-AZURE_MYSQL_USER = "Tech0Gen8TA3"
-AZURE_MYSQL_PASSWORD = "gen8-1-ta@3"  # 実際のパスワードを設定
-AZURE_MYSQL_DATABASE = "pos"
-AZURE_MYSQL_PORT = "3306"
+AZURE_MYSQL_HOST = os.getenv("AZURE_MYSQL_HOST")
+AZURE_MYSQL_USER = os.getenv("AZURE_MYSQL_USER")
+AZURE_MYSQL_PASSWORD = os.getenv("AZURE_MYSQL_PASSWORD")
+AZURE_MYSQL_DATABASE = os.getenv("AZURE_MYSQL_DATABASE")
+AZURE_MYSQL_PORT = os.getenv("AZURE_MYSQL_PORT")
 
 # SQLAlchemy接続URL
 SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{AZURE_MYSQL_USER}:{AZURE_MYSQL_PASSWORD}@{AZURE_MYSQL_HOST}:{AZURE_MYSQL_PORT}/{AZURE_MYSQL_DATABASE}"
