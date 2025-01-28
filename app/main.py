@@ -43,9 +43,9 @@ class ProductItem(BaseModel):
     quantity: int
 
 class TransactionRequest(BaseModel):
-    emp_cd: str | None = None
-    store_cd: str | None = None
-    pos_no: str | None = None
+    emp_cd: Optional[str] = None
+    store_cd: Optional[str] = None
+    pos_no: Optional[str] = None
     products: List[ProductItem]
 
 @app.get("/api/products/{code}", response_model=ProductResponse)
