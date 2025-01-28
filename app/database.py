@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 # Azure Database for MySQL接続情報
 AZURE_MYSQL_HOST = "tech0-gen-8-step4-db-3.mysql.database.azure.com"
 AZURE_MYSQL_USER = "Tech0Gen8TA3"
-AZURE_MYSQL_PASSWORD = "New_password"  # 実際のパスワードを設定
+AZURE_MYSQL_PASSWORD = "gen8-1-ta@3"  # 実際のパスワードを設定
 AZURE_MYSQL_DATABASE = "pos"
 AZURE_MYSQL_PORT = "3306"
 
