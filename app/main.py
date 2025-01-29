@@ -5,6 +5,8 @@ from datetime import datetime
 from pydantic import BaseModel
 from .database import SessionLocal, test_connection, engine
 from . import models
+from decimal import Decimal
+from sqlalchemy import select
 
 # データベース接続テストとテーブル作成
 try:
@@ -48,6 +50,33 @@ class TransactionRequest(BaseModel):
     pos_no: Optional[str] = None
     products: List[ProductItem]
 
+class TransactionResponse(BaseModel):
+    total_amount: int
+    total_amount_ex_tax: int
+
+def get_tax_rate(tax_code: str = '10') -> Decimal:
+    """
+    税マスタから指定された税コードの税率を取得する
+    Args:
+        tax_code: 税コード（デフォルト: '10'）
+    Returns:
+        Decimal: 税率（例: 0.10）
+    """
+    db = SessionLocal()
+    try:
+        # 税マスタから税率を取得
+        stmt = select(models.Tax).where(models.Tax.CODE == tax_code)
+        tax = db.execute(stmt).scalar_one_or_none()
+        
+        if tax:
+            print(f"Found tax rate: {tax.PERCENT} for code: {tax_code}")
+            return tax.PERCENT
+        
+        print(f"Tax code {tax_code} not found, using default rate: 0.10")
+        return Decimal('0.10')  # デフォルト税率
+    finally:
+        db.close()
+
 @app.get("/api/products/{code}", response_model=ProductResponse)
 async def get_product(code: str):
     db = SessionLocal()
@@ -78,40 +107,54 @@ async def get_product(code: str):
     finally:
         db.close()
 
-@app.post("/api/transactions")
-async def create_transaction(request: TransactionRequest):
+@app.post("/api/transactions", response_model=TransactionResponse)
+async def create_transaction(transaction: TransactionRequest):
     db = SessionLocal()
     try:
-        # 取引データの作成
-        total_amount = sum(p.price * p.quantity for p in request.products)
-        transaction = models.Transaction(
+        # 税率を取得
+        tax_rate = get_tax_rate('10')  # 現在は'10'固定
+        
+        # 合計金額（税抜）を計算
+        total_amount_ex_tax = sum(item.price * item.quantity for item in transaction.products)
+        
+        # 合計金額（税込）を計算
+        total_amount = int(total_amount_ex_tax * (1 + tax_rate))
+        
+        # トランザクションを作成
+        db_transaction = models.Transaction(
             DATETIME=datetime.now(),
-            EMP_CD=request.emp_cd or "9999999999",
-            STORE_CD=request.store_cd or "30",
-            POS_NO=request.pos_no or "90",
-            TOTAL_AMT=total_amount
+            EMP_CD=transaction.emp_cd or "9999999999",
+            STORE_CD=transaction.store_cd or "30",
+            POS_NO=transaction.pos_no or "90",
+            TOTAL_AMT=total_amount,
+            TTL_AMT_EX_TAX=total_amount_ex_tax
         )
-        db.add(transaction)
+        db.add(db_transaction)
         db.flush()
-
-        # 取引明細の作成
-        for idx, product in enumerate(request.products, 1):
+        
+        # トランザクション明細を作成
+        for idx, item in enumerate(transaction.products, 1):
             detail = models.TransactionDetail(
-                TRD_ID=transaction.TRD_ID,
+                TRD_ID=db_transaction.TRD_ID,
                 DTL_ID=idx,
-                PRD_ID=product.prd_id,
-                PRD_CODE=product.code,
-                PRD_NAME=product.name,
-                PRD_PRICE=product.price
+                PRD_ID=item.prd_id,
+                PRD_CODE=item.code,
+                PRD_NAME=item.name,
+                PRD_PRICE=item.price,
+                TAX_CD='10'  # 消費税区分（'10'固定）
             )
             db.add(detail)
         
         db.commit()
-        return {"success": True, "total_amount": total_amount}
-    
+        
+        # レスポンスを返す
+        return {
+            "total_amount": total_amount,
+            "total_amount_ex_tax": total_amount_ex_tax
+        }
     except Exception as e:
         db.rollback()
-        print(f"Error in create_transaction: {str(e)}")  # エラーログ追加
+        print(f"Error in create_transaction: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close() 
